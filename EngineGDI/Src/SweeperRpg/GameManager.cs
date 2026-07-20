@@ -7,7 +7,7 @@ namespace EngineGDI.Src.SweeperRpg
 {
     public class GameManager : Node
     {
-        // Buscar patron maquina estados
+        //Buscar patron maquina estados
         private enum GameState
         {
             MAIN_MENU,
@@ -15,6 +15,8 @@ namespace EngineGDI.Src.SweeperRpg
             PLAYING_LEVEL,
 
             VICTORY,
+
+            GAME_WIN,
 
             DEFEAT,
 
@@ -29,20 +31,34 @@ namespace EngineGDI.Src.SweeperRpg
         {
             get { return instance; }
         }
-        private readonly Font font = new Font("Assets/Fonts/pixel.ttf", 16);
+        private readonly Font font = new Font("Pixel", 16);
         private readonly UI.MainMenu mainMenu;
         private readonly LevelManager levelManager = LevelManager.Instance;
         private readonly DefeatScreen defeat;
         private readonly VictoryScreen victory;
+        private readonly GameWinScreen gameWin;
 
         private int level;
         private int maxLvls;
+
+        public int Score { get; private set; }
+
+        public void AddScore(int amount)
+        {
+            Score += amount;
+        }
+
+        public void ResetScore()
+        {
+            Score = 0;
+        }
 
         private GameManager()
         {
             mainMenu = new UI.MainMenu(font: font);
             defeat = new DefeatScreen(font: font);
             victory = new VictoryScreen(font: font);
+            gameWin = new GameWinScreen(font: font);
 
             ReadLevelCount();
 
@@ -56,10 +72,10 @@ namespace EngineGDI.Src.SweeperRpg
             maxLvls = dir.GetFiles().Length;
         }
 
-        // Custom methods here
         public void OnPlay()
         {
             level = 1;
+            ResetScore();
 
             state = GameState.PLAYING_LEVEL;
             levelManager.StartLevel(level);
@@ -69,6 +85,7 @@ namespace EngineGDI.Src.SweeperRpg
         {
             state = GameState.PLAYING_LEVEL;
             levelManager.ResetLevel();
+            ResetScore();
         }
 
         public void OnExit()
@@ -87,18 +104,29 @@ namespace EngineGDI.Src.SweeperRpg
             state = GameState.VICTORY;
         }
 
+        public void OnGameWin()
+        {
+            state = GameState.GAME_WIN;
+        }
+
         public void NextLevel()
         {
-            if (maxLvls == level)
-            {
-                state = GameState.MAIN_MENU;
-
-                return;
-            }
             level++;
 
             state = GameState.PLAYING_LEVEL;
             levelManager.StartLevel(level);
+        }
+
+        public void CompleteLevel()
+        {
+            if (level == maxLvls)
+            {
+                OnGameWin();
+            }
+            else
+            {
+                OnVictory();
+            }
         }
 
         public void OnMainMenu()
@@ -120,6 +148,9 @@ namespace EngineGDI.Src.SweeperRpg
                 case GameState.VICTORY:
                     victory.Input();
                     break;
+                case GameState.GAME_WIN:
+                    gameWin.Input();
+                    break;
                 case GameState.DEFEAT:
                     defeat.Input();
                     break;
@@ -137,10 +168,12 @@ namespace EngineGDI.Src.SweeperRpg
                     break;
                 case GameState.VICTORY:
                     break;
+                case GameState.GAME_WIN:
+                    break;
                 case GameState.DEFEAT:
                     break;
                 case GameState.QUIT:
-                    // Close the game window.
+                    //Close the game window.
                     Application.Exit();
                     break;
             }
@@ -158,6 +191,9 @@ namespace EngineGDI.Src.SweeperRpg
                     break;
                 case GameState.VICTORY:
                     victory.Draw();
+                    break;
+                case GameState.GAME_WIN:
+                    gameWin.Draw();
                     break;
                 case GameState.DEFEAT:
                     defeat.Draw();

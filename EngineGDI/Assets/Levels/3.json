@@ -1,0 +1,47 @@
+{
+  "props": {
+    "start": "#A72BFF",
+    "end": "#7600D1",
+    "treasure": "#CBA406",
+    "basic": "#93FF42",
+    "lineMesh": "#F7F12A",
+    "background": "#8B5B8F"
+  },
+  "grid": [
+    [
+      { "id": "0.0", "type": "S" },
+      { "id": "1.0" },
+      { "id": "2.0", "type": "E", "kind": "G_M" },
+      { "id": "3.0", "type": "E", "kind": "G_R" },
+      { "id": "4.0", "type": "E", "kind": "G_R" }
+    ],
+    [
+      { "id": "0.1", "type": "E", "kind": "G_R" },
+      { "id": "1.1", "type": "E", "kind": "G_R" },
+      { "id": "2.1" },
+      { "id": "3.1", "type": "E", "kind": "G_B3" },
+      { "id": "4.1", "type": "E", "kind": "G_R" }
+    ],
+    [
+      { "id": "0.2", "type": "E", "kind": "G_R" },
+      { "id": "1.2", "type": "E", "kind": "G_M" },
+      { "id": "2.2" },
+      { "id": "3.2", "type": "E", "kind": "G_M" },
+      { "id": "4.2" }
+    ],
+    [
+      { "id": "0.3", "type": "E", "kind": "G_R" },
+      { "id": "1.3", "type": "E", "kind": "G_M" },
+      { "id": "2.3", "type": "E", "kind": "G_B3" },
+      { "id": "3.3", "type": "E", "kind": "G_R" },
+      { "id": "4.3" }
+    ],
+    [
+      { "id": "0.4", "type": "E", "kind": "G_R" },
+      { "id": "1.4", "type": "E", "kind": "G_R" },
+      { "id": "2.4", "type": "E", "kind": "G_M" },
+      { "id": "3.4", "type": "E", "kind": "G_B3" },
+      { "id": "4.4", "type": "D" }
+    ]
+  ]
+}

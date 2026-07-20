@@ -18,7 +18,7 @@ namespace EngineGDI.Src.SweeperRpg
     }
 
     public class LevelData
-    { // atributo props pubnlico que es de tipo LevelDataProps
+    { // atributo props publico que es de tipo LevelDataProps
         public LevelDataProps props;
         public List<List<Cell>> grid;
     }
@@ -98,14 +98,17 @@ namespace EngineGDI.Src.SweeperRpg
                             //si la celda alguna moneda, los dibujamos :)
                             break;
                         case CellType.ENEMY:
-                            enemies.Add(
-                                new Enemy(
-                                    x: columnId + fillColumns,
-                                    y: rowId + fillRows,
-                                    kind: cell.kind.Value
-                                )
+                            Enemy enemy = EnemyFactory.Create(
+                                x: columnId + fillColumns,
+                                y: rowId + fillRows,
+                                kind: cell.kind.Value
                             );
+
+                            enemy.OnDefeated += EnemyDefeated;
+
+                            enemies.Add(enemy);
                             break;
+
                         case CellType.START:
                             player.SetStart(x: columnId + fillColumns, y: rowId + fillRows);
                             continue;
@@ -146,6 +149,17 @@ namespace EngineGDI.Src.SweeperRpg
                 enemy.Defeat();
         }
 
+        private void PlayerHealthChanged(int health)
+        {
+            System.Diagnostics.Debug.WriteLine($"Player HP: {health}");
+        }
+
+        private void EnemyDefeated(Enemy enemy)
+        {
+            GameManager.Instance.AddScore(1);
+            System.Diagnostics.Debug.WriteLine("Enemy defeated!");
+        }
+
         public void StartLevel(int level)
         {
             enemies.Clear();
@@ -161,6 +175,7 @@ namespace EngineGDI.Src.SweeperRpg
         public void Init(Font font)
         {
             ui = new LevelUI(font: font, player: player);
+            player.OnHealthChanged += PlayerHealthChanged;
         }
 
         public void CheckVictoryCondition()
@@ -170,7 +185,7 @@ namespace EngineGDI.Src.SweeperRpg
                     .grid[player.Position.X - fillColumns][player.Position.Y - fillRows]
                     .type == CellType.END
             )
-                GameManager.Instance.OnVictory();
+                GameManager.Instance.CompleteLevel();
         }
 
         public override void Input()

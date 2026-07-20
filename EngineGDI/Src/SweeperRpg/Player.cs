@@ -1,28 +1,42 @@
+using System;
 using System.Drawing;
+using System.Numerics;
 using System.Windows.Forms;
 
 namespace EngineGDI.Src.SweeperRpg
 {
-    public class Player : Node
+    public class Player : Node, IDamageable, IResettable, IDrawableEntity
     {
         private Point position;
         public Point Position
         {
             get { return position; }
         }
-        private Point positionToUpdate = new Point();
+
+        private readonly Transform transform = new Transform();
+        public Transform Transform
+        {
+            get { return transform; }
+        }
+
         private Point start = new Point();
+
         private readonly Image tile;
         public Image Tile
         {
             get { return tile; }
         }
+
+        private readonly Renderer renderer;
+
         private readonly int maxHealth = 8;
         private int health;
         public int Hp
         {
             get { return health; }
         }
+
+        public event Action<int> OnHealthChanged;
 
         private readonly Collisioner collisioner;
         public Collisioner Collisioner
@@ -32,14 +46,17 @@ namespace EngineGDI.Src.SweeperRpg
 
         public Player(int x, int y)
         {
-            position = new Point(x: x, y: y);
-            positionToUpdate.X = position.X * 32;
-            positionToUpdate.Y = position.Y * 32;
+            position = new Point(x, y);
+
+            transform.Position = new Vector2(position.X * 32, position.Y * 32);
+
             tile = TileMap.LoadSprite(path: "Assets/32rogues/rogues.png", row: 2, column: 2);
 
+            renderer = new Renderer(texture: tile, baseSize: new Size(32, 32));
+
             collisioner = new Collisioner(
-                position: position,
-                size: new Size(width: 32, height: 32),
+                transform: transform,
+                size: new Size(32, 32),
                 brushColor: Color.DarkBlue
             );
         }
@@ -54,19 +71,19 @@ namespace EngineGDI.Src.SweeperRpg
 
         public void Reset()
         {
-            position.X = start.X;
-            position.Y = start.Y;
-            positionToUpdate.X = position.X * 32;
-            positionToUpdate.Y = position.Y * 32;
+            position = start;
+
+            transform.Position = new Vector2(position.X * 32, position.Y * 32);
 
             health = maxHealth;
 
-            collisioner.Reset(positionToUpdate);
+            collisioner.Reset();
         }
 
         public void TakeDamage(int damage)
         {
             health -= damage;
+            OnHealthChanged?.Invoke(health);
         }
 
         public bool IsDead()
@@ -77,24 +94,26 @@ namespace EngineGDI.Src.SweeperRpg
         public override void Input()
         {
             bool changed = false;
-            Point prevPosition = new Point(x: position.X, y: position.Y);
+            Point previousPosition = position;
 
             if (Engine.OnKeyDown(Keys.W))
             {
                 position.Y--;
-
                 changed = true;
             }
+
             if (Engine.OnKeyDown(Keys.A))
             {
                 position.X--;
                 changed = true;
             }
+
             if (Engine.OnKeyDown(Keys.S))
             {
                 position.Y++;
                 changed = true;
             }
+
             if (Engine.OnKeyDown(Keys.D))
             {
                 position.X++;
@@ -103,25 +122,24 @@ namespace EngineGDI.Src.SweeperRpg
 
             if (changed)
             {
-                if (LevelManager.Instance.IsWithinLimits(position: position))
+                if (LevelManager.Instance.IsWithinLimits(position))
                 {
-                    positionToUpdate.X = position.X * 32;
-                    positionToUpdate.Y = position.Y * 32;
-
-                    collisioner.UpdatePosition(position: positionToUpdate);
+                    transform.Position = new Vector2(position.X * 32, position.Y * 32);
 
                     CollisionManager.Instance.ValidateCollitions();
 
                     LevelManager.Instance.CheckVictoryCondition();
                 }
                 else
-                    position = prevPosition;
+                {
+                    position = previousPosition;
+                }
             }
         }
 
         public override void Draw()
         {
-            Engine.DrawImage(texture: tile, x: positionToUpdate.X, y: positionToUpdate.Y);
+            renderer.Draw(transform);
         }
     }
 }

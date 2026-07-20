@@ -1,4 +1,5 @@
 using System.Drawing;
+using EngineGDI.Src.SweeperRpg;
 
 namespace EngineGDI.Src
 {
@@ -11,38 +12,37 @@ namespace EngineGDI.Src
             get { return rect; }
         }
 
+        private readonly Transform transform;
         private readonly Pen pen;
         private readonly Brush brush;
 
         private bool debugCollisioned = false;
 
-        public Collisioner(Point position, Size size, Color brushColor)
+        public Collisioner(Transform transform, Size size, Color brushColor)
         {
+            this.transform = transform;
+
             rect = new Rectangle(
                 location: new Point(
-                    x: position.X + (size.Width / 4),
-                    y: position.Y + (size.Height / 4)
+                    x: (int)transform.Position.X + (size.Width / 4),
+                    y: (int)transform.Position.Y + (size.Height / 4)
                 ),
                 size: new Size(width: size.Width / 2, height: size.Height / 2)
             );
-            pen = new Pen(color: Color.Red);
-            brush = new SolidBrush(color: brushColor);
+
+            pen = new Pen(Color.Red);
+            brush = new SolidBrush(brushColor);
         }
 
-        public void UpdatePosition(Point position)
+        private void UpdateRectangle()
         {
-            rect.X = position.X + (rect.Size.Width / 2);
-            rect.Y = position.Y + (rect.Size.Height / 2);
+            rect.X = (int)transform.Position.X + (rect.Width / 2);
+            rect.Y = (int)transform.Position.Y + (rect.Height / 2);
         }
 
-        public void Reset(Point? position)
+        public void Reset()
         {
-            if (position.HasValue)
-            {
-                rect.X = position.Value.X + (rect.Size.Width / 2);
-                rect.Y = position.Value.Y + (rect.Size.Height / 2);
-            }
-
+            UpdateRectangle();
             debugCollisioned = false;
         }
 
@@ -58,6 +58,9 @@ namespace EngineGDI.Src
 
         public bool CheckCollision(Collisioner element)
         {
+            UpdateRectangle();
+            element.UpdateRectangle();
+
             return rect.X + rect.Width >= element.rect.X
                 && rect.X <= element.rect.X + element.rect.Width
                 && rect.Y + rect.Height >= element.rect.Y
@@ -66,6 +69,8 @@ namespace EngineGDI.Src
 
         public override void Draw()
         {
+            UpdateRectangle();
+
             Engine.DrawCollision(pen: pen, rect: rect, brush: debugCollisioned ? brush : null);
         }
     }

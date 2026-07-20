@@ -1,0 +1,498 @@
+@startuml
+title Sweeper RPG - Complete UML
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+left to right direction
+
+package "Engine" {
+
+abstract class Node {
+    +Input() : void
+    +Update(deltaTime : float) : void
+    +Draw() : void
+}
+
+class Engine {
+    {static} +Initialize(...) : void
+    {static} +Run(...) : void
+    {static} +DrawImage(texture, x, y) : void
+    {static} +DrawRectangle(...) : void
+    {static} +DrawCollision(...) : void
+    {static} +DrawText(...) : void
+    {static} +OnKeyDown(key) : bool
+    {static} +OnKey(key) : bool
+}
+
+class Program {
+    +Main(args : string[]) : void
+}
+
+class TileMap {
+    {static} +LoadSprite(path : string, row : int, column : int)
+}
+
+class CollisionManager {
+
+    -instance : CollisionManager
+
+    -player : Player
+    -enemies : List<Enemy>
+
+    +Instance : CollisionManager
+
+    +SetPlayer(player : Player)
+    +SetEnemies(enemies : List<Enemy>)
+    +ValidateCollitions()
+    +Input()
+    +Update(deltaTime : float)
+    +Draw()
+}
+
+class Collisioner {
+
+    -rect : Rectangle
+    -transform : Transform
+    -pen : Pen
+    -brush : Brush
+    -debugCollisioned : bool
+
+    +Rect : Rectangle
+
+    +Collisioner(transform : Transform, size : Size, brushColor : Color)
+
+    -UpdateRectangle()
+
+    +Reset()
+
+    +OnCollisionIn()
+
+    +OnCollisionOut()
+
+    +CheckCollision(element : Collisioner) : bool
+
+    +Draw()
+}
+
+class ColorHexConverter {
+    +ReadJson(...)
+    +WriteJson(...)
+}
+
+Node <|-- CollisionManager
+Node <|-- Collisioner
+
+Program ..> Engine
+
+CollisionManager ..> Collisioner
+Collisioner --> Transform
+
+}
+package "Game Core" {
+
+interface IDamageable {
+    +TakeDamage(damage : int)
+}
+
+interface IResettable {
+    +Reset()
+}
+
+interface IDrawableEntity {
+    +Draw()
+}
+
+class Transform {
+
+    +Position : Vector2
+    +Rotation : Vector2
+    +Scale : Vector2
+
+    +Transform()
+}
+
+class Renderer {
+
+    -texture : Image
+    -baseSize : Size
+
+    +Renderer(texture : Image, baseSize : Size)
+
+    +Draw(transform : Transform)
+}
+
+class Player {
+
+    -position : Point
+    -start : Point
+
+    -transform : Transform
+    -renderer : Renderer
+    -collisioner : Collisioner
+
+    -tile : Image
+
+    -maxHealth : int
+    -health : int
+
+    +Position : Point
+    +Transform : Transform
+    +Tile : Image
+    +Hp : int
+    +Collisioner : Collisioner
+
+    +OnHealthChanged : Action<int>
+
+    +Player(x : int, y : int)
+
+    +SetStart(x : int, y : int)
+
+    +Reset()
+
+    +TakeDamage(damage : int)
+
+    +IsDead() : bool
+
+    +Input()
+
+    +Draw()
+}
+
+class Enemy {
+
+    -position : Point
+
+    -transform : Transform
+    -renderer : Renderer
+    -collisioner : Collisioner
+
+    -tile : Image
+
+    -damage : int
+    -state : State
+
+    +Damage : int
+    +Transform : Transform
+    +Collisioner : Collisioner
+
+    +OnDefeated : Action<Enemy>
+
+    +Enemy(x : int, y : int, kind : EnemyKind)
+
+    +Defeat()
+
+    +IsAlive() : bool
+
+    +Reset()
+
+    +Draw()
+}
+
+class EnemyFactory {
+
+    {static} +Create(x : int, y : int, kind : EnemyKind) : Enemy
+
+}
+
+class "Pool<T>" as Pool {
+
+    -objects : Queue<T>
+
+    +Add(obj : T)
+
+    +Get(creator : Func<T>) : T
+
+    +Return(obj : T)
+
+}
+
+class GameManager {
+
+    -instance : GameManager
+
+    -state : GameState
+
+    +Instance : GameManager
+
+    +StartGame()
+
+    +OnVictory()
+
+    +OnDefeat()
+
+    +Input()
+
+    +Update(deltaTime)
+
+    +Draw()
+
+}
+
+class LevelManager {
+
+    -instance : LevelManager
+
+    -player : Player
+
+    -enemies : List<Enemy>
+
+    -grid : Grid
+
+    -ui : LevelUI
+
+    +Instance : LevelManager
+
+    +Player : Player
+
+    +ActiveEnemies : List<Enemy>
+
+    +LoadLevel(level)
+
+    +StartLevel(level)
+
+    +ResetLevel()
+
+    +CheckVictoryCondition()
+
+    +IsWithinLimits(position)
+
+    +OnCollision(enemy)
+
+    +Input()
+
+    +Update(deltaTime)
+
+    +Draw()
+
+}
+
+Node <|-- Player
+Node <|-- Enemy
+Node <|-- LevelManager
+Node <|-- GameManager
+
+Player ..|> IDamageable
+Player ..|> IResettable
+Player ..|> IDrawableEntity
+
+Enemy ..|> IResettable
+Enemy ..|> IDrawableEntity
+
+Pool ..|> IResettable : T
+
+Player *-- Transform
+Player *-- Renderer
+Player *-- Collisioner
+
+Enemy *-- Transform
+Enemy *-- Renderer
+Enemy *-- Collisioner
+
+Renderer --> Transform
+Collisioner --> Transform
+
+EnemyFactory ..> Enemy : creates
+
+LevelManager *-- Player
+LevelManager o-- Enemy
+LevelManager *-- Grid
+
+LevelManager --> EnemyFactory
+LevelManager --> CollisionManager
+LevelManager --> GameManager
+
+GameManager --> LevelManager
+
+}
+
+package "Game Data" {
+
+class Grid {
+
+    -level : LevelData
+
+    +SetLevel(level : LevelData)
+
+    +Reset()
+
+    +Update(deltaTime)
+
+    +Draw()
+
+    +DrawAfter()
+
+}
+
+class Cell {
+
+    +type : CellType
+    +kind : EnemyKind?
+
+}
+
+class LevelData {
+
+    +props : LevelDataProps
+    +grid : List<List<Cell>>
+
+}
+
+class LevelDataProps {
+
+    +start : Color
+    +end : Color
+    +basic : Color
+    +lineMesh : Color
+    +treasure : Color
+    +background : Color
+
+}
+
+enum CellType {
+    NULL
+    START
+    END
+    ENEMY
+    COIN
+}
+
+enum EnemyKind {
+    GOBLIN_ROGUE
+    GOBLIN_ARCHER
+    GOBLIN_MAGE
+    GOBLIN_BARBARIC
+    GOBLIN_BOSS_1
+    GOBLIN_BOSS_2
+    GOBLIN_BOSS_3
+}
+
+enum GameState {
+    MAIN_MENU
+    PLAYING
+    VICTORY
+    DEFEAT
+    QUIT
+}
+
+Grid --> LevelData
+
+LevelData *-- LevelDataProps
+LevelData *-- Cell
+
+Cell --> CellType
+Cell --> EnemyKind
+
+LevelManager --> LevelData
+
+GameManager --> GameState
+
+Enemy --> EnemyKind
+
+}
+package "UI" {
+
+class MainMenu {
+
+    -selectedOption : int
+
+    +Input()
+
+    +Update(deltaTime)
+
+    +Draw()
+
+}
+
+class LevelUI {
+
+    -player : Player
+
+    -playerInfo : PlayerInfo
+
+    -currentLevel : int
+
+    +LevelUI(font, player)
+
+    +SetLevel(level : int)
+
+    +Draw()
+
+}
+
+class PlayerInfo {
+
+    -player : Player
+
+    +PlayerInfo(font, player)
+
+    +Draw()
+
+}
+
+class VictoryScreen {
+
+    +Input()
+
+    +Update(deltaTime)
+
+    +Draw()
+
+}
+
+class DefeatScreen {
+
+    +Input()
+
+    +Update(deltaTime)
+
+    +Draw()
+
+}
+
+Node <|-- MainMenu
+Node <|-- LevelUI
+Node <|-- PlayerInfo
+Node <|-- VictoryScreen
+Node <|-- DefeatScreen
+
+LevelUI *-- PlayerInfo
+LevelUI --> Player
+PlayerInfo --> Player
+
+GameManager --> MainMenu
+GameManager --> VictoryScreen
+GameManager --> DefeatScreen
+GameManager --> LevelUI
+
+}
+package "Tests" {
+
+class PoolTests {
+
+    +AddAndGetReturnsSameObject()
+
+    +ReturnResetsObject()
+
+}
+
+class EnemyFactoryTests {
+
+    +FactoryCreatesEnemy()
+
+}
+
+class TransformTests {
+
+    +TransformStartsWithCorrectDefaults()
+
+}
+
+PoolTests ..> Pool
+EnemyFactoryTests ..> EnemyFactory
+TransformTests ..> Transform
+
+}
+@enduml
